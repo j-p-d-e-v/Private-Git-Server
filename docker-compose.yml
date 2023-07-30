@@ -1,0 +1,18 @@
+version: '3.6'
+services:
+  git-server:
+    build:
+      context: .
+      no_cache: true
+      tags:
+        - "git-server:latest"
+    image: git-server:latest
+    volumes:
+      - ./git:/var/git
+      - ./ssh-keys:/tmp/ssh-keys
+    env_file:
+      - .env
+    tty: true
+    ports:
+      - 5080:80
+      - 5022:22
