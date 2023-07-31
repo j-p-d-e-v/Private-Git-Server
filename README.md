@@ -40,13 +40,13 @@ docker-compose up -d
 
 **via HTTP**
 ```
-git clone http://<container_ip>/<repo_name>
+git clone http://<container_ip>/repositories/<repo_name>
 ```
 
 Example:
 
 ```
-git clone http://192.168.0.2:5080/myrepo
+git clone http://192.168.0.2:5080/repositories/myrepo
 ```
 
 **via SSH**
@@ -58,6 +58,13 @@ git clone ssh://root@<container_ip>:<port>/var/git/<repo_name>
 
 ```
 git clone ssh://root@192.168.0.2:2/var/git/myrepo
+```
+
+# API
+
+The server exposes a swagger documentation. You visit the swagger page at: 
+```
+http://<ip_domain>:5080/api/docs
 ```
 
 # Developer

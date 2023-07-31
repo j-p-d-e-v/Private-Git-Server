@@ -26,7 +26,7 @@ RUN apt-get update -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create directories and set the working directory
-RUN mkdir /var/scripts /var/git
+RUN mkdir /var/scripts /var/git /var/app
 WORKDIR /var/git
 
 # Copy required files
@@ -34,6 +34,9 @@ COPY scripts /var/scripts
 COPY config/sshd_config /etc/ssh/sshd_config
 COPY supervisor /etc/supervisor/conf.d
 COPY nginx /etc/nginx/sites-enabled
+COPY app /var/app
+
+RUN pip install -r /var/app/requirements.txt
 
 # Expose necessary ports
 EXPOSE 80 8080 22 443
