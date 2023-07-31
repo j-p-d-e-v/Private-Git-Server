@@ -109,3 +109,27 @@ class GitRepo:
             }
         except Exception as e:
             raise Exception(str(e))
+        
+    
+    def commitHistory(self,repo_name):
+        try:
+            if repo_name is None:
+                raise Exception("Repository is required.")
+            data = []
+            repo_path = os.path.join(GIT_REPOSITORIES_DIR,repo_name)
+
+            if not os.path.exists(repo_path):
+                raise Exception("Repository does not exists.")
+
+            repo = git.Repo(repo_path)
+            for commit in repo.iter_commits():
+                data.append({
+                    "hash": commit.hexsha,
+                    "author": commit.author.name,
+                    "email": commit.author.email,
+                    "date": commit.authored_datetime,
+                    "message": commit.message
+                })
+            return data
+        except Exception as e:
+            raise Exception(str(e))

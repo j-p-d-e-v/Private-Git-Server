@@ -8,7 +8,7 @@ class GitRepoTest(TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.repo_name = "test-repo----.."
-        self.rename_repo_name = "rename-test-repo"
+        self.rename_repo_name = "rename-test-r...epo"
     
     def _create_repo(self):
         print("==================================")
