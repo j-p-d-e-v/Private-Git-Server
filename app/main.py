@@ -36,6 +36,15 @@ class RenameRepo(BaseModel):
     current_name: str
     new_name: str
 
+
+@app.get("/commit-history")
+def commit_history(repo_name:str):
+    try:
+        git_repo = GitRepo()
+        return git_repo.commitHistory(repo_name)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @app.post("/create-repository")
 def create_repository(repo: CreateRepo):
     try:
