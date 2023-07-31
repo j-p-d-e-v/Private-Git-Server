@@ -10,9 +10,11 @@ services:
     volumes:
       - ./git:/var/git
       - ./ssh-keys:/tmp/ssh-keys
+      - ./app:/var/app
     env_file:
       - .env
     tty: true
     ports:
       - 5080:80
+      - 5081:81
       - 5022:22

@@ -1,0 +1,6 @@
+fastapi
+requests
+GitPython
+uvicorn[standard]
+python-jose[cryptography]
+passlib[bcrypt]
