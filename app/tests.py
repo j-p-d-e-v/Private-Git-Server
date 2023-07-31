@@ -7,7 +7,7 @@ class GitRepoTest(TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.repo_name = "test-repo"
+        self.repo_name = "test-repo----.."
         self.rename_repo_name = "rename-test-repo"
     
     def _create_repo(self):
@@ -16,6 +16,7 @@ class GitRepoTest(TestCase):
         git_repo = GitRepo()
         repo = git_repo.createRepo(self.repo_name)
         pprint.pprint(repo)
+        self.repo_name = repo.get("name")
         self.assertTrue(isinstance(repo,dict),msg="Return data must be a dictionary.")
     
     def _rename_repo(self):
@@ -24,6 +25,7 @@ class GitRepoTest(TestCase):
         git_repo = GitRepo()
         repo = git_repo.renameRepo(self.repo_name,self.rename_repo_name)
         pprint.pprint(repo)
+        self.rename_repo_name = repo.get("name")
         self.assertTrue(isinstance(repo,dict),msg="Return data must be a dictionary.")
     
     def _delete_repo(self):

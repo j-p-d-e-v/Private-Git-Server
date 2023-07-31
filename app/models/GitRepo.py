@@ -2,6 +2,7 @@ import git
 from settings import GIT_REPOSITORIES_DIR, GIT_REPO_BASE_URL, ALLOW_REPO_DELETION
 import os
 import shutil
+import re
 
 class GitRepo:
     '''Execute git actions'''
@@ -10,7 +11,15 @@ class GitRepo:
         '''
             Initialize the GitRepo class
         '''
-    
+    def sanitizeRepoName(self,repo_name):
+        repo_name = re.sub(r'[~^.:\\?\[\]*\s]', '-', repo_name)
+        if repo_name.endswith('.git'):
+            repo_name = repo_name[:-4]
+        if not repo_name or repo_name.startswith('-'):
+            raise ValueError("Invalid repository name")
+        repo_name = re.sub(r'-{2,}', '-', repo_name)
+        return repo_name
+
     def toUrl(self,repo_name):
         return "{}/{}".format(GIT_REPO_BASE_URL,repo_name)
 
@@ -41,6 +50,7 @@ class GitRepo:
             Returns: The name, and url of the repository.
         '''
         try:
+            repo_name = self.sanitizeRepoName(repo_name)
             repo_path = os.path.join(GIT_REPOSITORIES_DIR,repo_name)
             if os.path.exists(repo_path):
                 raise Exception("{} already exists.".format(repo_name))
@@ -57,14 +67,17 @@ class GitRepo:
         '''
             Rename a repository.
             Parameters:
-            - repo_name - The repository name.    
+            - src_repo_name - The source repository name.    
+            - dst_repo_name - The desired repository name.  
 
             Returns: The new name, and url of the repository.
         '''
         try:
+            src_repo_name = self.sanitizeRepoName(src_repo_name)
             repo_path = os.path.join(GIT_REPOSITORIES_DIR,src_repo_name)
             if not os.path.exists(repo_path):
                 raise Exception("Failed to archive repository. {} repository does not exists.".format(src_repo_name))
+            dst_repo_name = self.sanitizeRepoName(dst_repo_name)
             dst_repo_path = os.path.join(GIT_REPOSITORIES_DIR,dst_repo_name)
             os.rename(repo_path,dst_repo_path)
             return {
@@ -84,7 +97,7 @@ class GitRepo:
             Returns: Throws an exception if failed. True if successfully deleted the repo.
         '''
         try:
-            if ALLOW_REPO_DELETION:
+            if not ALLOW_REPO_DELETION:
                 raise Exception("Deleting of repository is prohibited.")
             repo_path = os.path.join(GIT_REPOSITORIES_DIR,repo_name)
             if not os.path.exists(repo_path):
