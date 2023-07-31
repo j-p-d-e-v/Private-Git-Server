@@ -1,5 +1,9 @@
 .DS_Store
 git/*
 ssh-keys/*
+<<<<<<< HEAD
 *.pyc
 .env
+=======
+*.pyc
+>>>>>>> 6fec584b6af8ed211c0b7adc7d4e664af280c58d
