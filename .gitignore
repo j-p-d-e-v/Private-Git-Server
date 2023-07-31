@@ -2,3 +2,4 @@
 git/*
 ssh-keys/*
 *.pyc
+.env
