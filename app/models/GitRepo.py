@@ -38,8 +38,27 @@ class GitRepo:
             return data
         except Exception as e:
             raise Exception(str(e))
-        
+    
+    def isRepoExists(self,repo_name):
+        '''
+            Check if repository already exists.
+            Parameters:
+            - repot_name - The repository to search.
 
+            Returns: The status of the existence of the repo.
+            - name - The repo name
+            - is_exists - True if exists. False if does not exists.
+        '''
+        if repo_name is None:
+            raise Exception("Repository name is required.")
+        
+        repos    = os.listdir(GIT_REPOSITORIES_DIR)
+        status   =  True if repo_name in repos else False
+        return {
+            "name": repo_name,
+            "is_exists": status
+        }
+    
     def createRepo(self,repo_name):
         '''
             Create a repository.

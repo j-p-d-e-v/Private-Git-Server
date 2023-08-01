@@ -19,6 +19,14 @@ class GitRepoTest(TestCase):
         self.repo_name = repo.get("name")
         self.assertTrue(isinstance(repo,dict),msg="Return data must be a dictionary.")
     
+    def _is_repo_exists(self):
+        print("==================================")
+        print("_is_repo_exists")
+        git_repo = GitRepo()
+        repo = git_repo.isRepoExists(self.repo_name)
+        pprint.pprint(repo)
+        self.assertTrue(isinstance(repo,dict),msg="Return data must be a dictionary.")
+    
     def _rename_repo(self):
         print("==================================")
         print("_rename_repo")
@@ -46,6 +54,7 @@ class GitRepoTest(TestCase):
 
     def test_git_repo(self):
         self._create_repo()
+        self._is_repo_exists()
         self._rename_repo()
         self._list_repos()
         self._delete_repo()

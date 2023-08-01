@@ -45,6 +45,14 @@ def commit_history(repo_name:str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.get("/is-repo-exists")
+def is_repo_exists(repo_name:str):
+    try:
+        git_repo = GitRepo()
+        return git_repo.isRepoExists(repo_name)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @app.post("/create-repository")
 def create_repository(repo: CreateRepo):
     try:
