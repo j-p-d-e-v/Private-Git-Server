@@ -42,13 +42,12 @@ class RenameRepo(BaseModel):
 
 
 @app.get("/commit-history")
-def commit_history(repo_name:str):
+def commit_history(repo_name:str, branch: str = "master", commits_limit:int = 3):
     try:
         git_repo = GitRepo()
-        return git_repo.commitHistory(repo_name)
+        return git_repo.commitHistory(repo_name,branch,commits_limit)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
 
 @app.get("/commit-changes")
 def commit_changes(repo_name:str, commit_hash:str):
