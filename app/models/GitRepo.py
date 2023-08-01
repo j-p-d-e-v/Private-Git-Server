@@ -36,7 +36,7 @@ class GitRepo:
             data = []
             repos = os.listdir(GIT_REPOSITORIES_DIR)
             if search:
-                repos = [ repo for repo in repos if re.search(search.lower(),repo.get("name").lower()) ]
+                repos = [ repo for repo in repos if re.search(search.lower(),repo.lower()) ]
             for repo_name in repos:
                 if os.path.isdir(os.path.join(GIT_REPOSITORIES_DIR,repo_name)):
                     data.append(self.getRepo(repo_name,branch,commits_limit))
