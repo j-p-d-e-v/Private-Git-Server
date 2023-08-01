@@ -2,6 +2,13 @@ from unittest import TestCase
 from models.GitRepo import GitRepo
 import pprint
 
+
+class GitDiffTest(TestCase):
+    
+    def test_commit_diff(self):
+        git_repo = GitRepo()
+        print(git_repo.commitDiff("flex-platform-proxy","3131cf9f15703f3e27a0a7d385157bbb72e80bc2"))
+
 class GitRepoTest(TestCase):
 
     def setUp(self) -> None:

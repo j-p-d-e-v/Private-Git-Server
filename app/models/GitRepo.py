@@ -11,6 +11,8 @@ class GitRepo:
         '''
             Initialize the GitRepo class
         '''
+        pass
+    
     def sanitizeRepoName(self,repo_name):
         repo_name = re.sub(r'[~^.:\\?\[\]*\s]', '-', repo_name)
         if repo_name.endswith('.git'):
@@ -206,6 +208,66 @@ class GitRepo:
                 return data
             except Exception as e:
                 print(str(e))
+                return []
+        except Exception as e:
+            raise Exception(str(e))
+        
+
+    def getChangeType(self,change):
+        '''
+            Get the type of change happened in a commit.
+            Parameter:
+            - change - The change object from commit.diff()
+
+            Returns: The type of change
+            - M - Modified
+            - D - Deleted
+            - A - Added
+        '''
+        if change.a_path and change.b_path:
+            return 'M'
+        elif change.a_path:
+            return 'D'
+        else:
+            return 'A'
+    
+    def commitDiff(self,repo_name, commit_hash):
+        try:
+            '''
+                Get the changes in a commit.
+
+                Parameters:
+                - repo_name - The repository name.
+                - commit_hash - The commit hash to check for changes.
+
+                Returns: List of changes
+                - diff - The changes for each files affected.
+                - change_type - The type of change.
+            '''
+            if repo_name is None:
+                raise Exception("Repository is required.")
+            data = []
+            repo_path = os.path.join(GIT_REPOSITORIES_DIR,repo_name)
+
+            if not os.path.exists(repo_path):
+                raise Exception("Repository does not exists.")
+
+            repo = git.Repo(repo_path)
+            commit = repo.commit(commit_hash)
+            parent_commit = commit.parents[0] if commit.parents else None
+            if parent_commit:
+                changes = commit.diff(parent_commit,create_patch=True)
+                data = []
+                if changes:
+                    for change in changes:
+                        data.append({
+                            "current_commit": commit_hash,
+                            "previous_commit": parent_commit.hexsha,
+                            "change_type": self.getChangeType(change),
+                            "diff": change.diff
+                        })
+                return data
+            else:
                 return []
         except Exception as e:
             raise Exception(str(e))

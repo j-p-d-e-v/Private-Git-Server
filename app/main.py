@@ -49,6 +49,15 @@ def commit_history(repo_name:str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
+@app.get("/commit-changes")
+def commit_changes(repo_name:str, commit_hash:str):
+    try:
+        git_repo = GitRepo()
+        return git_repo.commitDiff(repo_name,commit_hash)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @app.get("/is-repo-exists")
 def is_repo_exists(repo_name:str):
     try:
