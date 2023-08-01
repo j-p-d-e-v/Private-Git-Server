@@ -2,7 +2,6 @@ from unittest import TestCase
 from models.GitRepo import GitRepo
 import pprint
 
-
 class GitRepoTest(TestCase):
 
     def setUp(self) -> None:
@@ -24,6 +23,14 @@ class GitRepoTest(TestCase):
         print("_is_repo_exists")
         git_repo = GitRepo()
         repo = git_repo.isRepoExists(self.repo_name)
+        pprint.pprint(repo)
+        self.assertTrue(isinstance(repo,dict),msg="Return data must be a dictionary.")
+    
+    def _get_repo(self):
+        print("==================================")
+        print("_get_repo")
+        git_repo = GitRepo()
+        repo = git_repo.getRepo(self.repo_name)
         pprint.pprint(repo)
         self.assertTrue(isinstance(repo,dict),msg="Return data must be a dictionary.")
     
@@ -55,6 +62,7 @@ class GitRepoTest(TestCase):
     def test_git_repo(self):
         self._create_repo()
         self._is_repo_exists()
+        self._get_repo()
         self._rename_repo()
         self._list_repos()
         self._delete_repo()

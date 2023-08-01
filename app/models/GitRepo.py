@@ -23,22 +23,52 @@ class GitRepo:
     def toUrl(self,repo_name):
         return "{}/{}".format(GIT_REPO_BASE_URL,repo_name)
 
-    def listRepos(self):
+    def listRepos(self,search=None,branch="master",commits_limit=3):
         try:
             '''
                 List all git repositories
+                Parameters:
+                - search - The value to search.
+                - branch - The repository branch to target. Default: master
+                - commits_limit - The number of commits to get in the commit history
                 Returns: The list of repostories.
             '''
             data = []
-            for repo_name in os.listdir(GIT_REPOSITORIES_DIR):
-                data.append({
-                    "name": repo_name,
-                    "url": self.toUrl(repo_name)
-                })
+            repos = os.listdir(GIT_REPOSITORIES_DIR)
+            if search:
+                repos = [ repo for repo in repos if re.search(search.lower(),repo.get("name").lower()) ]
+            for repo_name in repos:
+                if os.path.isdir(os.path.join(GIT_REPOSITORIES_DIR,repo_name)):
+                    data.append(self.getRepo(repo_name,branch,commits_limit))
             return data
         except Exception as e:
             raise Exception(str(e))
     
+    def getRepo(self,repo_name,branch="master",commits_limit=5):
+        try:
+            '''
+                Get repository information.
+                Parameters:
+                - branch - The repository branch to target. Default: master
+                - commits_limit - The number of commits to get in the commit history
+
+                Returns: Git repo information
+                - name - The name of the repository.
+                - url - The url of the repository.
+                - branches - Branches available.
+                - branch - The selected branch of the repository.
+                - history - The commit history.
+            '''
+            branches = self.getBranches(repo_name)
+            return {
+                "name": repo_name,
+                "url": self.toUrl(repo_name),
+                "branches": branches,
+                "branch": branch if branches else "",
+                "commit_history": self.commitHistory(repo_name,branch,commits_limit)
+            }
+        except Exception as e:
+            raise Exception(str(e))
     def isRepoExists(self,repo_name):
         '''
             Check if repository already exists.
@@ -128,9 +158,16 @@ class GitRepo:
             }
         except Exception as e:
             raise Exception(str(e))
-        
     
-    def commitHistory(self,repo_name):
+    def getBranches(self,repo_name):
+
+        '''
+            Get the repository branches
+            Parameters:
+            - repo_name - The repository name.    
+
+            Returns: List of branches
+        '''
         try:
             if repo_name is None:
                 raise Exception("Repository is required.")
@@ -141,14 +178,34 @@ class GitRepo:
                 raise Exception("Repository does not exists.")
 
             repo = git.Repo(repo_path)
-            for commit in repo.iter_commits():
-                data.append({
-                    "hash": commit.hexsha,
-                    "author": commit.author.name,
-                    "email": commit.author.email,
-                    "date": commit.authored_datetime,
-                    "message": commit.message
-                })
-            return data
+            return [head.name for head in repo.heads]
+        except Exception as e:
+            raise Exception(str(e))
+    
+    def commitHistory(self,repo_name, branch="master",commits_limit=0):
+        try:
+            if repo_name is None:
+                raise Exception("Repository is required.")
+            data = []
+            repo_path = os.path.join(GIT_REPOSITORIES_DIR,repo_name)
+
+            if not os.path.exists(repo_path):
+                raise Exception("Repository does not exists.")
+
+            repo = git.Repo(repo_path)
+            try:
+                for commit in repo.iter_commits(branch,max_count=commits_limit):
+                    data.append({
+                        "hash": commit.hexsha,
+                        "author": commit.author.name,
+                        "email": commit.author.email,
+                        "date": commit.authored_datetime,
+                        "message": commit.message,
+                        "branch": branch
+                    })
+                return data
+            except Exception as e:
+                print(str(e))
+                return []
         except Exception as e:
             raise Exception(str(e))

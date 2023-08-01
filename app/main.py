@@ -19,11 +19,15 @@ app.add_middleware(
 
 
 @app.get("/repositories")
-def repositories(search: str = None):
+def repositories(search: str = None, branch: str = "master", commits_limit: int = 1):
     git_repo = GitRepo()
-    repos = git_repo.listRepos()
-    if search:
-        return [ repo for repo in repos if re.search(search.lower(),repo.get("name").lower()) ]
+    repos = git_repo.listRepos(search=search,branch=branch,commits_limit=commits_limit)
+    return repos
+
+@app.get("/repository")
+def repository(repo_name: str, branch: str = "master", commits_limit: int = 3):
+    git_repo = GitRepo()
+    repos = git_repo.getRepo(repo_name=repo_name,branch=branch,commits_limit=commits_limit)
     return repos
 
 class CreateRepo(BaseModel):
