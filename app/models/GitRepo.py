@@ -1,8 +1,10 @@
-import git
-from settings import GIT_REPOSITORIES_DIR, GIT_REPO_BASE_URL, ALLOW_REPO_DELETION
+import pygit2
+from settings import GIT_REPOSITORIES_DIR, GIT_REPO_BASE_URL, ALLOW_REPO_DELETION, GIT_REPO_SSL
 import os
 import shutil
 import re
+from datetime import datetime
+import ansi2html
 
 class GitRepo:
     '''Execute git actions'''
@@ -23,7 +25,10 @@ class GitRepo:
         return repo_name
 
     def toUrl(self,repo_name):
-        return "{}/{}".format(GIT_REPO_BASE_URL,repo_name)
+        protocol = "http"
+        if GIT_REPO_SSL == True:
+            protocol = "https"
+        return "{}://{}/{}".format(protocol,GIT_REPO_BASE_URL,repo_name)
 
     def listRepos(self,search=None,branch="master",commits_limit=3):
         try:
@@ -105,8 +110,8 @@ class GitRepo:
             repo_path = os.path.join(GIT_REPOSITORIES_DIR,repo_name)
             if os.path.exists(repo_path):
                 raise Exception("{} already exists.".format(repo_name))
-
-            git.Repo.init(repo_path,bare=True)
+            
+            pygit2.init_repository(repo_path, bare=True)
             return {
                 "name": repo_name,
                 "url": self.toUrl(repo_name)
@@ -173,14 +178,13 @@ class GitRepo:
         try:
             if repo_name is None:
                 raise Exception("Repository is required.")
-            data = []
             repo_path = os.path.join(GIT_REPOSITORIES_DIR,repo_name)
 
             if not os.path.exists(repo_path):
                 raise Exception("Repository does not exists.")
 
-            repo = git.Repo(repo_path)
-            return [head.name for head in repo.heads]
+            repo = pygit2.Repository(repo_path)
+            return repo.listall_branches()
         except Exception as e:
             raise Exception(str(e))
     
@@ -193,18 +197,27 @@ class GitRepo:
 
             if not os.path.exists(repo_path):
                 raise Exception("Repository does not exists.")
-
-            repo = git.Repo(repo_path)
+            
+            repo = pygit2.Repository(repo_path)
             try:
-                for commit in repo.iter_commits(branch,max_count=commits_limit):
+                branch_ref = repo.lookup_reference("refs/heads/{}".format(branch))
+                commit = repo.get(branch_ref.target)
+                while commit and (not commits_limit or len(data) < commits_limit):
                     data.append({
-                        "hash": commit.hexsha,
+                        "hash": commit.hex,
+                        "short_id": commit.short_id,
                         "author": commit.author.name,
                         "email": commit.author.email,
-                        "date": commit.authored_datetime,
+                        "date": datetime.fromtimestamp(commit.commit_time).strftime("%Y-%m-%d %H:%M:%S"),
                         "message": commit.message,
                         "branch": branch
                     })
+                    if len(data) > commits_limit:
+                        break
+                    if len(commit.parents) == 0:
+                        break
+                    commit = commit.parents[0]
+
                 return data
             except Exception as e:
                 print(str(e))
@@ -224,12 +237,43 @@ class GitRepo:
             - D - Deleted
             - A - Added
         '''
-        if change.a_path and change.b_path:
+        if change.old_file_path and change.new_file_path:
             return 'M'
-        elif change.a_path:
+        elif change.old_file_path:
             return 'D'
         else:
             return 'A'
+        
+
+    def applyColorsToPatch(self,patch_content):
+        '''
+            Apply colors to diff patch.
+            Parameters:
+            - patch_content
+
+            Returns: Coloured patch content
+        '''
+        added_color = "\x1b[32m" 
+        modified_color = "\x1b[33m"
+        deleted_color = "\x1b[31m"
+        reset_color = "\x1b[0m"
+
+        lines = patch_content.splitlines()
+
+        colored_lines = []
+        for line in lines:
+            if line.startswith("+"):
+                colored_lines.append(added_color + line + reset_color)
+            elif line.startswith("-"):
+                colored_lines.append(deleted_color + line + reset_color)
+            elif line.startswith("@@"):
+                colored_lines.append(modified_color + line + reset_color)
+            else:
+                colored_lines.append(line)
+        
+        colored_patch = "\n".join(colored_lines)
+
+        return colored_patch
     
     def commitDiff(self,repo_name, commit_hash):
         try:
@@ -251,23 +295,29 @@ class GitRepo:
 
             if not os.path.exists(repo_path):
                 raise Exception("Repository does not exists.")
-
-            repo = git.Repo(repo_path)
-            commit = repo.commit(commit_hash)
-            parent_commit = commit.parents[0] if commit.parents else None
-            if parent_commit:
-                changes = commit.diff(parent_commit,create_patch=True)
-                data = []
-                if changes:
-                    for change in changes:
-                        data.append({
-                            "current_commit": commit_hash,
-                            "previous_commit": parent_commit.hexsha,
-                            "change_type": self.getChangeType(change),
-                            "diff": change.diff
-                        })
-                return data
+            
+            repo = pygit2.Repository(repo_path)
+            commit = repo.get(commit_hash)
+            parent_commit = commit.parents[0] if len(commit.parents)>0 else None
+            commit_tree = commit.tree
+            parent_tree = parent_commit.tree if parent_commit else None
+            if parent_tree:
+                diff = repo.diff(commit_tree, parent_tree)
             else:
-                return []
+                diff = commit_tree.diff_to_tree()
+            if diff:
+                
+                for patch in diff:
+                    converter = ansi2html.Ansi2HTMLConverter()
+                    item = {
+                        "current_commit": commit.hex,
+                        "previous_commit": parent_commit.hex if parent_commit else None,                        
+                        "diff": patch.data,
+                        "html_diff": converter.convert(
+                            self.applyColorsToPatch(patch.text)
+                        )
+                    }        
+                    data.append(item)
+            return data
         except Exception as e:
             raise Exception(str(e))

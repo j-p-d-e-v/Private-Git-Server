@@ -1,6 +1,8 @@
 fastapi
 requests
-GitPython
 uvicorn[standard]
 python-jose[cryptography]
 passlib[bcrypt]
+pygments
+pygit2
+ansi2html
